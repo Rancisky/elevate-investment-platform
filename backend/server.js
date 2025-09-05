@@ -1,6 +1,4 @@
 const express = require('express');
-// Remove mongoose - we're using Supabase PostgreSQL now
-// const mongoose = require('mongoose');
 const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
@@ -27,7 +25,7 @@ const createDevUser = async () => {
         .eq('user_id', devUserId)
         .single();
       
-      if (selectError && selectError.code !== 'PGRST116') { // PGRST116 = no rows returned
+      if (selectError && selectError.code !== 'PGRST116') {
         console.error('Error checking for dev user:', selectError);
         return;
       }
@@ -67,7 +65,20 @@ const createDevUser = async () => {
 
 // Middleware
 app.use(helmet());
-app.use(cors());
+
+// Updated CORS configuration to fix mobile connectivity
+app.use(cors({
+  origin: [
+    'http://localhost:3000',
+    'https://frontend-sage-five-68.vercel.app',
+    'https://frontend-ppnzrsfwt-ranciskys-projects.vercel.app',
+    'https://frontend-46cvamuxe-ranciskys-projects.vercel.app'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -76,16 +87,6 @@ app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
   next();
 });
-
-// Remove MongoDB connection - Supabase handles connections automatically
-/*
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/elevate-network', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('✅ Connected to MongoDB'))
-.catch((err) => console.error('❌ MongoDB connection error:', err));
-*/
 
 // Routes
 console.log('Setting up routes...');
@@ -181,7 +182,7 @@ try {
   console.error('❌ Error loading support routes:', error.message);
 }
 
-// Payment routes (if you have them)
+// Payment routes
 try {
   const paymentRoutes = require('./routes/payment');
   app.use('/api/payment', paymentRoutes);
@@ -190,7 +191,7 @@ try {
   console.log('⚠️ Payment routes not found - skipping');
 }
 
-// Serve static files from React build (if you have a build folder)
+// Serve static files from React build
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, 'build')));
   
@@ -233,15 +234,12 @@ const listRoutes = () => {
   
   const routes = [];
   
-  // Helper function to extract routes from router
   const extractRoutes = (stack, basePath = '') => {
     stack.forEach(layer => {
       if (layer.route) {
-        // Direct route
         const methods = Object.keys(layer.route.methods).join(', ').toUpperCase();
         routes.push(`${methods} ${basePath}${layer.route.path}`);
       } else if (layer.name === 'router') {
-        // Router middleware
         const routerPath = layer.regexp.source
           .replace(/\\\//g, '/')
           .replace(/\^/g, '')
@@ -277,9 +275,6 @@ app.listen(PORT, async () => {
   console.log(`🗄️ Database: Supabase PostgreSQL`);
   console.log(`🔒 Security: Row-Level Security enabled`);
   
-  // Set up development user if needed
   await createDevUser();
-  
-  // List routes after server starts
   setTimeout(listRoutes, 100);
 });

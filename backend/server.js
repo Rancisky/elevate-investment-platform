@@ -66,13 +66,16 @@ const createDevUser = async () => {
 // Middleware
 app.use(helmet());
 
-// Updated CORS configuration to fix mobile connectivity
+// Updated CORS configuration with new custom domain
 app.use(cors({
   origin: [
     'http://localhost:3000',
+    'https://elevatenetwork.online',
+    'https://www.elevatenetwork.online',
     'https://frontend-sage-five-68.vercel.app',
     'https://frontend-ppnzrsfwt-ranciskys-projects.vercel.app',
-    'https://frontend-46cvamuxe-ranciskys-projects.vercel.app'
+    'https://frontend-46cvamuxe-ranciskys-projects.vercel.app',
+    'https://frontend-n17gpm5fi-ranciskys-projects.vercel.app'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

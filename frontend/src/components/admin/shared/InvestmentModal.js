@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_URL, apiRequest } from '../../api/api';
+import { API_URL, apiRequest } from '../../../api/api';
 
 const InvestmentModal = ({ campaign, isOpen, onClose, onInvest, userBalance = 0 }) => {
   const [investmentAmount, setInvestmentAmount] = useState('');

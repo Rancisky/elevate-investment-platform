@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import InvestmentModal from '../shared/InvestmentModal';
-import { API_URL, apiRequest } from '../../api/api';
+import { API_URL, apiRequest } from '../../../api/api';
 
 const CampaignList = ({ 
   campaigns: propCampaigns = null,

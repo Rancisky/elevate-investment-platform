@@ -3,7 +3,7 @@ import StatCard from '../shared/StatCard';
 import AdminList from './AdminList';
 import UserSearch from './UserSearch';
 import UserActionModal from './UserActionModal';
-import { API_URL, apiRequest } from '../../api/api';
+import { API_URL, apiRequest } from '../../../api/api';
 
 const UserManagement = () => {
   const [allUsers, setAllUsers] = useState([]);

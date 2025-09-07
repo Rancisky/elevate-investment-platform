@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_URL, apiRequest } from '../../api/api';
 
 const RegistrationWithPayment = () => {
   const [step, setStep] = useState(1); // 1: Form, 2: Payment, 3: Success
@@ -35,7 +36,7 @@ const RegistrationWithPayment = () => {
     }));
   };
 
-  // Verify referral code
+  // Verify referral code using centralized API
   const verifyReferral = async (code) => {
     if (!code) {
       setReferralInfo(null);
@@ -43,19 +44,18 @@ const RegistrationWithPayment = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/auth/verify-referral`, {
+      const data = await apiRequest('/auth/verify-referral', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ referralCode: code })
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (data && data.referrer) {
         setReferralInfo(data.referrer);
       } else {
         setReferralInfo(null);
       }
     } catch (error) {
+      console.error('Referral verification error:', error);
       setReferralInfo(null);
     }
   };
@@ -195,7 +195,7 @@ const RegistrationWithPayment = () => {
     }, 30 * 60 * 1000);
   };
 
-  // Create account after successful payment
+  // Create account after successful payment using centralized API
   const createAccount = async (paymentResult = null) => {
     try {
       const finalPaymentData = paymentResult || paymentData;
@@ -224,19 +224,16 @@ const RegistrationWithPayment = () => {
         }
       };
 
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const data = await apiRequest('/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(registrationData)
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
+      if (data && data.success) {
+        setStep(3); // Success step
+      } else {
+        throw new Error(data?.message || 'Registration failed');
       }
-
-      const data = await response.json();
-      setStep(3); // Success step
       
     } catch (error) {
       console.error('Registration error:', error);
@@ -331,6 +328,7 @@ const RegistrationWithPayment = () => {
                   required
                   value={formData.fullName}
                   onChange={handleInputChange}
+                  disabled={loading}
                   style={{
                     width: '100%',
                     padding: '12px',
@@ -338,7 +336,8 @@ const RegistrationWithPayment = () => {
                     borderRadius: '8px',
                     fontSize: '16px',
                     outline: 'none',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    backgroundColor: loading ? '#f5f5f5' : 'white'
                   }}
                 />
               </div>
@@ -352,6 +351,7 @@ const RegistrationWithPayment = () => {
                   required
                   value={formData.username}
                   onChange={handleInputChange}
+                  disabled={loading}
                   style={{
                     width: '100%',
                     padding: '12px',
@@ -359,7 +359,8 @@ const RegistrationWithPayment = () => {
                     borderRadius: '8px',
                     fontSize: '16px',
                     outline: 'none',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    backgroundColor: loading ? '#f5f5f5' : 'white'
                   }}
                 />
               </div>
@@ -375,6 +376,7 @@ const RegistrationWithPayment = () => {
                 required
                 value={formData.email}
                 onChange={handleInputChange}
+                disabled={loading}
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -382,7 +384,8 @@ const RegistrationWithPayment = () => {
                   borderRadius: '8px',
                   fontSize: '16px',
                   outline: 'none',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  backgroundColor: loading ? '#f5f5f5' : 'white'
                 }}
               />
             </div>
@@ -398,6 +401,7 @@ const RegistrationWithPayment = () => {
                   required
                   value={formData.password}
                   onChange={handleInputChange}
+                  disabled={loading}
                   style={{
                     width: '100%',
                     padding: '12px',
@@ -405,7 +409,8 @@ const RegistrationWithPayment = () => {
                     borderRadius: '8px',
                     fontSize: '16px',
                     outline: 'none',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    backgroundColor: loading ? '#f5f5f5' : 'white'
                   }}
                 />
               </div>
@@ -419,6 +424,7 @@ const RegistrationWithPayment = () => {
                   required
                   value={formData.confirmPassword}
                   onChange={handleInputChange}
+                  disabled={loading}
                   style={{
                     width: '100%',
                     padding: '12px',
@@ -426,7 +432,8 @@ const RegistrationWithPayment = () => {
                     borderRadius: '8px',
                     fontSize: '16px',
                     outline: 'none',
-                    boxSizing: 'border-box'
+                    boxSizing: 'border-box',
+                    backgroundColor: loading ? '#f5f5f5' : 'white'
                   }}
                 />
               </div>
@@ -442,6 +449,7 @@ const RegistrationWithPayment = () => {
                 required
                 value={formData.phone}
                 onChange={handleInputChange}
+                disabled={loading}
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -449,7 +457,8 @@ const RegistrationWithPayment = () => {
                   borderRadius: '8px',
                   fontSize: '16px',
                   outline: 'none',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  backgroundColor: loading ? '#f5f5f5' : 'white'
                 }}
               />
             </div>
@@ -466,6 +475,7 @@ const RegistrationWithPayment = () => {
                   handleInputChange(e);
                   verifyReferral(e.target.value);
                 }}
+                disabled={loading}
                 style={{
                   width: '100%',
                   padding: '12px',
@@ -473,7 +483,8 @@ const RegistrationWithPayment = () => {
                   borderRadius: '8px',
                   fontSize: '16px',
                   outline: 'none',
-                  boxSizing: 'border-box'
+                  boxSizing: 'border-box',
+                  backgroundColor: loading ? '#f5f5f5' : 'white'
                 }}
               />
               {referralInfo && (
@@ -498,21 +509,38 @@ const RegistrationWithPayment = () => {
 
             <button
               type="submit"
+              disabled={loading}
               style={{
                 width: '100%',
                 padding: '15px',
-                backgroundColor: '#28a745',
+                backgroundColor: loading ? '#6c757d' : '#28a745',
                 color: 'white',
                 border: 'none',
                 borderRadius: '8px',
                 fontSize: '18px',
                 fontWeight: '600',
-                cursor: 'pointer'
+                cursor: loading ? 'not-allowed' : 'pointer'
               }}
             >
-              Proceed to Payment ($20 USDT)
+              {loading ? 'Processing...' : 'Proceed to Payment ($20 USDT)'}
             </button>
           </form>
+
+          {/* Development helper */}
+          {process.env.NODE_ENV === 'development' && (
+            <div style={{
+              marginTop: '20px',
+              padding: '10px',
+              backgroundColor: '#f3f4f6',
+              borderRadius: '8px',
+              fontSize: '12px',
+              color: '#4b5563',
+              textAlign: 'center'
+            }}>
+              <strong>Development Mode:</strong><br />
+              API URL: {API_URL}
+            </div>
+          )}
         </div>
       </div>
     );
@@ -781,7 +809,7 @@ const RegistrationWithPayment = () => {
             disabled={loading}
             style={{
               backgroundColor: 'transparent',
-              color: '#666',
+              color: loading ? '#999' : '#666',
               border: 'none',
               cursor: loading ? 'not-allowed' : 'pointer',
               textDecoration: 'underline'
@@ -846,11 +874,30 @@ const RegistrationWithPayment = () => {
             borderRadius: '8px',
             fontSize: '16px',
             fontWeight: '600',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            transition: 'background-color 0.2s'
           }}
+          onMouseOver={(e) => e.target.style.backgroundColor = '#0056b3'}
+          onMouseOut={(e) => e.target.style.backgroundColor = '#007bff'}
         >
           Go to Login
         </button>
+
+        {/* Development helper */}
+        {process.env.NODE_ENV === 'development' && (
+          <div style={{
+            marginTop: '20px',
+            padding: '10px',
+            backgroundColor: '#f3f4f6',
+            borderRadius: '8px',
+            fontSize: '12px',
+            color: '#4b5563',
+            textAlign: 'center'
+          }}>
+            <strong>Success!</strong><br />
+            Account created using API: {API_URL}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import StatCard from '../shared/StatCard';
 import AdminList from './AdminList';
 import UserSearch from './UserSearch';
 import UserActionModal from './UserActionModal';
+import { API_URL, apiRequest } from '../../api/api';
 
 const UserManagement = () => {
   const [allUsers, setAllUsers] = useState([]);
@@ -17,17 +18,10 @@ const UserManagement = () => {
   const fetchAllUsers = async () => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
       
-      const response = await fetch('http://localhost:5000/api/auth/users', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
+      const data = await apiRequest('/auth/users');
       
-      if (response.ok) {
-        const data = await response.json();
+      if (data) {
         setAllUsers(data.users || []);
       }
     } catch (error) {
@@ -40,17 +34,9 @@ const UserManagement = () => {
   // Fetch admin users
   const fetchAdminUsers = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const data = await apiRequest('/auth/admin/list');
       
-      const response = await fetch('http://localhost:5000/api/auth/admin/list', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
+      if (data) {
         setAdminUsers(data.admins || []);
       }
     } catch (error) {
@@ -62,14 +48,9 @@ const UserManagement = () => {
   const promoteToAdmin = async (user) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
       
-      const response = await fetch('http://localhost:5000/api/auth/promote-to-admin', {
+      const data = await apiRequest('/auth/promote-to-admin', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
           userId: user.userId,
           username: user.username,
@@ -77,9 +58,7 @@ const UserManagement = () => {
         })
       });
       
-      const data = await response.json();
-      
-      if (data.success) {
+      if (data && data.success) {
         alert(`${user.name} has been promoted to admin successfully!`);
         fetchAllUsers();
         fetchAdminUsers();
@@ -87,7 +66,7 @@ const UserManagement = () => {
         setSelectedUser(null);
         setUserAction('');
       } else {
-        alert(`Error: ${data.message}`);
+        alert(`Error: ${data?.message || 'Promotion failed'}`);
       }
     } catch (error) {
       alert('Error promoting user. Please try again.');
@@ -101,14 +80,9 @@ const UserManagement = () => {
   const demoteAdmin = async (user) => {
     try {
       setLoading(true);
-      const token = localStorage.getItem('token');
       
-      const response = await fetch('http://localhost:5000/api/auth/demote-admin', {
+      const data = await apiRequest('/auth/demote-admin', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({
           userId: user.userId,
           username: user.username,
@@ -116,9 +90,7 @@ const UserManagement = () => {
         })
       });
       
-      const data = await response.json();
-      
-      if (data.success) {
+      if (data && data.success) {
         alert(`${user.name} has been demoted to member successfully!`);
         fetchAllUsers();
         fetchAdminUsers();
@@ -126,7 +98,7 @@ const UserManagement = () => {
         setSelectedUser(null);
         setUserAction('');
       } else {
-        alert(`Error: ${data.message}`);
+        alert(`Error: ${data?.message || 'Demotion failed'}`);
       }
     } catch (error) {
       alert('Error demoting admin. Please try again.');

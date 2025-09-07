@@ -7,6 +7,7 @@ import MemberReferrals from '../member/MemberReferrals';
 import MemberWallet from '../member/MemberWallet';
 import MemberProfile from '../member/MemberProfile';
 import CampaignList from '../admin/Campaigns/CampaignList';
+import { API_URL, apiRequest } from '../../api/api';
 
 const MemberDashboard = ({ onLogout }) => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -25,51 +26,23 @@ const MemberDashboard = ({ onLogout }) => {
   const [transactions, setTransactions] = useState([]);
   const [recentReferrals, setRecentReferrals] = useState([]);
 
-  const API_BASE = 'http://localhost:5000/api';
-
   // API call helper with fixed authentication
   const apiCall = async (endpoint, options = {}) => {
-    console.log(`Making API call to: ${API_BASE}${endpoint}`);
-
-    // Get token from localStorage
-    const token = localStorage.getItem('token');
-    if (!token) {
-      console.log('No token found - logging out');
-      onLogout();
-      return null;
-    }
-
+    console.log(`Making API call to: ${endpoint}`);
+    
     try {
-      const config = {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          ...options.headers
-        },
-        ...options
-      };
-
-      const response = await fetch(`${API_BASE}${endpoint}`, config);
-      console.log(`Response status for ${endpoint}:`, response.status);
-
-      if (!response.ok) {
-        if (response.status === 401 || response.status === 403) {
-          console.log('Authentication failed - logging out');
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          localStorage.removeItem('userRole');
-          // onLogout();  // Temporarily disabled for debugging
-          return null;
-        }
-        throw new Error(`API Error: ${response.status}`);
-      }
-
-      const data = await response.json();
+      const data = await apiRequest(endpoint, options);
       console.log(`Response data for ${endpoint}:`, data);
       return data;
-
     } catch (error) {
       console.error(`API call failed for ${endpoint}:`, error);
+      
+      // Check if it's an auth error
+      if (error.message.includes('401') || error.message.includes('403')) {
+        console.log('Authentication failed - logging out');
+        onLogout();
+        return null;
+      }
       
       // Don't set error state for authentication failures
       if (!error.message.includes('401') && !error.message.includes('403')) {
@@ -181,7 +154,7 @@ const MemberDashboard = ({ onLogout }) => {
         setReferralStats({
           ...referralStatsResponse,
           referralCode: userResponse?.userId || 'N/A',
-          referralLink: `https://elevate-network.com/register?ref=${userResponse?.userId || ''}`
+          referralLink: `https://elevatenetwork.online/register?ref=${userResponse?.userId || ''}`
         });
       }
 
@@ -819,7 +792,7 @@ const MemberDashboard = ({ onLogout }) => {
               cursor: 'pointer',
               fontSize: '16px',
               position: 'relative'
-                          }}>
+            }}>
               🔔
               <span style={{
                 position: 'absolute',

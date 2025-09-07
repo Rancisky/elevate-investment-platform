@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL, apiRequest } from '../../api/api';
 
-const MemberProfile = ({ memberData, apiCall, loadDashboardData }) => {
+const MemberProfile = ({ memberData, loadDashboardData }) => {
   const [activeSection, setActiveSection] = useState('personal');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState({ type: '', text: '' });
@@ -60,7 +61,7 @@ const MemberProfile = ({ memberData, apiCall, loadDashboardData }) => {
   const loadProfileData = async () => {
     setLoading(true);
     try {
-      const response = await apiCall('/users/profile');
+      const response = await apiRequest('/users/profile');
       if (response) {
         setProfileData(prev => ({ ...prev, ...response }));
       }
@@ -113,7 +114,8 @@ const MemberProfile = ({ memberData, apiCall, loadDashboardData }) => {
         });
       }, 200);
 
-      const response = await fetch('http://localhost:5000/api/users/upload-document', {
+      // Use centralized API for file upload
+      const response = await fetch(`${API_URL}/users/upload-document`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -157,7 +159,7 @@ const MemberProfile = ({ memberData, apiCall, loadDashboardData }) => {
     setMessage({ type: '', text: '' });
 
     try {
-      const response = await apiCall('/users/profile', {
+      const response = await apiRequest('/users/profile', {
         method: 'PUT',
         body: JSON.stringify({
           section,
@@ -179,7 +181,7 @@ const MemberProfile = ({ memberData, apiCall, loadDashboardData }) => {
   const submitForVerification = async () => {
     setLoading(true);
     try {
-      const response = await apiCall('/users/submit-kyc', {
+      const response = await apiRequest('/users/submit-kyc', {
         method: 'POST'
       });
 
@@ -373,6 +375,20 @@ const MemberProfile = ({ memberData, apiCall, loadDashboardData }) => {
         }
       `}</style>
 
+      {/* Development helper */}
+      {process.env.NODE_ENV === 'development' && (
+        <div style={{
+          backgroundColor: '#FEF3C7',
+          color: '#92400E',
+          padding: '12px',
+          borderRadius: '8px',
+          marginBottom: '20px',
+          fontSize: '14px'
+        }}>
+          <strong>Development Mode:</strong> Using API URL: {API_URL}
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ marginBottom: '32px' }}>
         <h2 style={{
@@ -559,7 +575,7 @@ const MemberProfile = ({ memberData, apiCall, loadDashboardData }) => {
               disabled={loading}
               style={{
                 marginTop: '24px',
-                background: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+                background: loading ? '#9CA3AF' : 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
                 color: 'white',
                 border: 'none',
                 padding: '14px 32px',
@@ -621,7 +637,7 @@ const MemberProfile = ({ memberData, apiCall, loadDashboardData }) => {
               disabled={loading}
               style={{
                 marginTop: '24px',
-                background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                background: loading ? '#9CA3AF' : 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
                 color: 'white',
                 border: 'none',
                 padding: '14px 32px',
@@ -690,7 +706,7 @@ const MemberProfile = ({ memberData, apiCall, loadDashboardData }) => {
               disabled={loading}
               style={{
                 marginTop: '24px',
-                background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+                background: loading ? '#9CA3AF' : 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
                 color: 'white',
                 border: 'none',
                 padding: '14px 32px',
@@ -745,7 +761,7 @@ const MemberProfile = ({ memberData, apiCall, loadDashboardData }) => {
               disabled={loading}
               style={{
                 marginTop: '24px',
-                background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+                background: loading ? '#9CA3AF' : 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
                 color: 'white',
                 border: 'none',
                 padding: '14px 32px',
@@ -804,7 +820,7 @@ const MemberProfile = ({ memberData, apiCall, loadDashboardData }) => {
               disabled={loading}
               style={{
                 marginTop: '24px',
-                background: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+                background: loading ? '#9CA3AF' : 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
                 color: 'white',
                 border: 'none',
                 padding: '14px 32px',

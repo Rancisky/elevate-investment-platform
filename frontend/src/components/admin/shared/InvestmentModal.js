@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_URL, apiRequest } from '../../api/api';
 
 const InvestmentModal = ({ campaign, isOpen, onClose, onInvest, userBalance = 0 }) => {
   const [investmentAmount, setInvestmentAmount] = useState('');
@@ -61,12 +62,9 @@ const InvestmentModal = ({ campaign, isOpen, onClose, onInvest, userBalance = 0 
     setError('');
 
     try {
-      // Make API call directly here since we need to handle the new response structure
-      const response = await fetch('http://localhost:5000/api/investments', {
+      // Make API call using centralized apiRequest function
+      const response = await apiRequest('/investments', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           campaignId: campaign.id || campaign._id,
           amount: amount,
@@ -74,19 +72,25 @@ const InvestmentModal = ({ campaign, isOpen, onClose, onInvest, userBalance = 0 
         }),
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        if (data.requiresPayment && data.paymentInstructions) {
+      if (response && response.success) {
+        if (response.requiresPayment && response.paymentInstructions) {
           // Show payment instructions instead of immediate success
-          setPaymentInstructions(data.paymentInstructions);
+          setPaymentInstructions(response.paymentInstructions);
           setSuccess('');
         } else {
           // Fallback to old success message format
           setSuccess(`Successfully invested $${amount.toLocaleString()} in ${campaign.title}!`);
+          
+          // Auto-close after 3 seconds for success
+          setTimeout(() => {
+            onClose();
+            if (onInvest) {
+              onInvest(campaign.id || campaign._id, amount);
+            }
+          }, 3000);
         }
       } else {
-        throw new Error(data.message || 'Investment failed');
+        throw new Error(response?.message || 'Investment failed');
       }
       
     } catch (error) {

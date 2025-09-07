@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import InvestmentModal from '../shared/InvestmentModal';
+import { API_URL, apiRequest } from '../../api/api';
 
 const CampaignList = ({ 
   campaigns: propCampaigns = null,
@@ -37,39 +38,32 @@ const CampaignList = ({
       let response;
       if (viewMode === "admin") {
         // Use admin endpoint for full campaign data including all statuses
-        response = await fetch('http://localhost:5000/api/campaigns/admin', {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          }
-        });
+        response = await apiRequest('/campaigns/admin');
       } else {
         // Members use public endpoint (only active campaigns)
-        response = await fetch('http://localhost:5000/api/campaigns/public');
+        response = await apiRequest('/campaigns/public');
       }
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Backend response:', data);
+      if (response) {
+        console.log('Backend response:', response);
         
         let campaignsList = [];
-        if (data.campaigns) {
-          campaignsList = data.campaigns;
-        } else if (Array.isArray(data)) {
-          campaignsList = data;
-        } else if (data.data) {
-          campaignsList = data.data;
+        if (response.campaigns) {
+          campaignsList = response.campaigns;
+        } else if (Array.isArray(response)) {
+          campaignsList = response;
+        } else if (response.data) {
+          campaignsList = response.data;
         }
         
         setCampaigns(campaignsList);
       } else {
-        console.error('Failed to load campaigns:', response.status);
+        console.error('Failed to load campaigns');
         // Fallback to public endpoint if admin fails
         if (viewMode === "admin") {
-          const fallbackResponse = await fetch('http://localhost:5000/api/campaigns/public');
-          if (fallbackResponse.ok) {
-            const fallbackData = await fallbackResponse.json();
-            setCampaigns(fallbackData.campaigns || fallbackData || []);
+          const fallbackResponse = await apiRequest('/campaigns/public');
+          if (fallbackResponse) {
+            setCampaigns(fallbackResponse.campaigns || fallbackResponse || []);
           } else {
             setCampaigns([]);
           }
@@ -90,18 +84,12 @@ const CampaignList = ({
     setActionLoading(prev => ({ ...prev, [campaignId]: true }));
     
     try {
-      const response = await fetch(`http://localhost:5000/api/campaigns/${campaignId}/status`, {
+      const response = await apiRequest(`/campaigns/${campaignId}/status`, {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify({ status: newStatus })
       });
 
-      const result = await response.json();
-      
-      if (response.ok && result.success) {
+      if (response && response.success) {
         // Update local state
         setCampaigns(prev => prev.map(campaign => 
           (campaign.id || campaign._id) === campaignId 
@@ -111,7 +99,7 @@ const CampaignList = ({
         
         alert(`Campaign status updated to ${newStatus}!`);
       } else {
-        throw new Error(result.message || 'Failed to update status');
+        throw new Error(response?.message || 'Failed to update status');
       }
     } catch (error) {
       console.error('Status update error:', error);
@@ -357,12 +345,8 @@ const CampaignList = ({
       setIsSubmitting(true);
       
       try {
-        const response = await fetch('http://localhost:5000/api/campaigns', {
+        const response = await apiRequest('/campaigns', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          },
           body: JSON.stringify({
             title: formData.title,
             description: formData.description,
@@ -373,9 +357,7 @@ const CampaignList = ({
           })
         });
 
-        const result = await response.json();
-
-        if (response.ok && result.success) {
+        if (response && response.success) {
           alert(`Campaign "${formData.title}" created successfully!`);
           setFormData({
             title: '',
@@ -388,7 +370,7 @@ const CampaignList = ({
           setShowModal(false);
           loadCampaignsFromBackend();
         } else {
-          throw new Error(result.message || 'Campaign creation failed');
+          throw new Error(response?.message || 'Campaign creation failed');
         }
       } catch (error) {
         console.error('Campaign creation error:', error);

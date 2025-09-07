@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_URL, apiRequest } from '../../api/api';
 
 const AdminLogin = ({ onAdminLoginSuccess, onBackToLanding }) => {
   const [formData, setFormData] = useState({
@@ -23,20 +24,16 @@ const AdminLogin = ({ onAdminLoginSuccess, onBackToLanding }) => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/admin-login', {
+      // Use centralized API request function
+      const data = await apiRequest('/auth/admin-login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           email: formData.email,
           password: formData.password
         }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (data && data.token) {
         // Store admin token and info
         localStorage.setItem('adminToken', data.token);
         localStorage.setItem('adminUser', JSON.stringify(data.user));
@@ -45,7 +42,7 @@ const AdminLogin = ({ onAdminLoginSuccess, onBackToLanding }) => {
         // Call success callback
         onAdminLoginSuccess(data.user);
       } else {
-        setError(data.message || 'Admin login failed');
+        setError(data?.message || 'Admin login failed');
       }
     } catch (error) {
       console.error('Admin login error:', error);
@@ -128,6 +125,7 @@ const AdminLogin = ({ onAdminLoginSuccess, onBackToLanding }) => {
               required
               value={formData.email}
               onChange={handleChange}
+              disabled={loading}
               style={{
                 width: '100%',
                 padding: '12px',
@@ -136,9 +134,10 @@ const AdminLogin = ({ onAdminLoginSuccess, onBackToLanding }) => {
                 fontSize: '16px',
                 outline: 'none',
                 transition: 'border-color 0.2s',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                backgroundColor: loading ? '#f9fafb' : 'white'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+              onFocus={(e) => !loading && (e.target.style.borderColor = '#3b82f6')}
               onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
               placeholder="admin@elevate-network.com"
             />
@@ -159,6 +158,7 @@ const AdminLogin = ({ onAdminLoginSuccess, onBackToLanding }) => {
               required
               value={formData.password}
               onChange={handleChange}
+              disabled={loading}
               style={{
                 width: '100%',
                 padding: '12px',
@@ -167,9 +167,10 @@ const AdminLogin = ({ onAdminLoginSuccess, onBackToLanding }) => {
                 fontSize: '16px',
                 outline: 'none',
                 transition: 'border-color 0.2s',
-                boxSizing: 'border-box'
+                boxSizing: 'border-box',
+                backgroundColor: loading ? '#f9fafb' : 'white'
               }}
-              onFocus={(e) => e.target.style.borderColor = '#3b82f6'}
+              onFocus={(e) => !loading && (e.target.style.borderColor = '#3b82f6')}
               onBlur={(e) => e.target.style.borderColor = '#e5e7eb'}
               placeholder="Enter admin password"
             />
@@ -191,6 +192,8 @@ const AdminLogin = ({ onAdminLoginSuccess, onBackToLanding }) => {
               transition: 'background-color 0.2s',
               marginBottom: '20px'
             }}
+            onMouseOver={(e) => !loading && (e.target.style.backgroundColor = '#b91c1c')}
+            onMouseOut={(e) => !loading && (e.target.style.backgroundColor = '#dc2626')}
           >
             {loading ? 'Authenticating...' : 'Access Admin Panel'}
           </button>
@@ -199,11 +202,12 @@ const AdminLogin = ({ onAdminLoginSuccess, onBackToLanding }) => {
         {/* Back Button */}
         <button
           onClick={onBackToLanding}
+          disabled={loading}
           style={{
             backgroundColor: 'transparent',
-            color: '#6b7280',
+            color: loading ? '#9ca3af' : '#6b7280',
             border: 'none',
-            cursor: 'pointer',
+            cursor: loading ? 'not-allowed' : 'pointer',
             fontSize: '14px',
             textDecoration: 'underline'
           }}
@@ -222,6 +226,21 @@ const AdminLogin = ({ onAdminLoginSuccess, onBackToLanding }) => {
         }}>
           <strong>Security Notice:</strong> This is a restricted area. All access attempts are logged and monitored.
         </div>
+
+        {/* Development helper - remove in production */}
+        {process.env.NODE_ENV === 'development' && (
+          <div style={{
+            marginTop: '15px',
+            padding: '10px',
+            backgroundColor: '#f3f4f6',
+            borderRadius: '8px',
+            fontSize: '12px',
+            color: '#4b5563'
+          }}>
+            <strong>Development Mode:</strong><br />
+            API URL: {API_URL}
+          </div>
+        )}
       </div>
     </div>
   );

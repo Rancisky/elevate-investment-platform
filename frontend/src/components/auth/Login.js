@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_URL, apiRequest } from '../../api/api';
 
 const Login = ({ onLoginSuccess, onBackToLanding }) => {
   const [formData, setFormData] = useState({
@@ -7,8 +8,6 @@ const Login = ({ onLoginSuccess, onBackToLanding }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  const API_BASE = 'http://localhost:5000/api';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,21 +22,16 @@ const Login = ({ onLoginSuccess, onBackToLanding }) => {
     }
 
     try {
-      // Make actual API call to backend
-      const response = await fetch(`${API_BASE}/auth/login`, {
+      // Make API call using centralized apiRequest function
+      const data = await apiRequest('/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({
           userId: formData.userId.trim(),
           password: formData.password
         }),
       });
 
-      const data = await response.json();
-
-      if (response.ok && data.success) {
+      if (data && data.success) {
         // Store both token and user data
         localStorage.setItem('token', data.token);
         localStorage.setItem('user', JSON.stringify(data.user));
@@ -47,7 +41,7 @@ const Login = ({ onLoginSuccess, onBackToLanding }) => {
         onLoginSuccess();
       } else {
         // Handle login errors from backend
-        setError(data.message || 'Invalid credentials. Please try again.');
+        setError(data?.message || 'Invalid credentials. Please try again.');
       }
     } catch (error) {
       console.error('Login error:', error);
